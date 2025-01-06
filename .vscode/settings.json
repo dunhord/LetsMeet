@@ -1,0 +1,14 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "lf8_lets_meet_postgres_container",
+            "username": "user",
+            "database": "lf8_lets_meet_db",
+            "password": "secret"
+        }
+    ]
+}

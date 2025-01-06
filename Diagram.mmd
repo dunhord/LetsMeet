@@ -1,0 +1,98 @@
+erDiagram
+
+
+    USER {
+        int user_id PK
+        string first_name
+        string last_name
+        string gender
+        date birth_date
+        string email
+        string phone
+        datetime created_at
+        datetime updated_at
+        binary profile_image
+        int address_id FK
+    }
+
+    ADDRESS {
+        int address_id PK
+        string street
+        string house_no
+        string zip_code
+        string city
+    }
+
+    HOBBY {
+        int hobby_id PK
+        string name
+    }
+
+    USER_HOBBY {
+        int user_id PK
+        int hobby_id PK
+        int priority
+    }
+
+    USER_HOBBY_PREFERENCE {
+        int user_id PK
+        int hobby_id PK
+        int preference
+    }
+
+    FRIENDSHIP {
+        int user_id1 PK
+        int user_id2 PK
+        string status
+    }
+
+    LIKE {
+        int liker_id PK
+        int likee_id PK
+        string status
+        datetime like_time
+    }
+
+    MESSAGE {
+        int message_id PK
+        int conversation_id
+        int sender_id
+        int receiver_id
+        string message_text
+        datetime send_time
+    }
+
+    USER_PHOTO {
+        int photo_id PK
+        int user_id
+        binary photo_data
+        string photo_url
+        string description
+    }
+
+
+    %% Beispiel: USER hat genau 1 Adresse, ADDRESS kann von vielen USERn geteilt werden
+    USER }|--|| ADDRESS : "lives_in"
+
+    %% USER_HOBBY: m:n zwischen USER und HOBBY
+    USER ||--|{ USER_HOBBY : "has"
+    HOBBY ||--|{ USER_HOBBY : "belongs_to"
+
+    %% USER_HOBBY_PREFERENCE: Präferenzen der Hobbys anderer
+    USER ||--|{ USER_HOBBY_PREFERENCE : "prefers"
+    HOBBY ||--|{ USER_HOBBY_PREFERENCE : "is_preferred"
+
+    %% FRIENDSHIP: m:n (self-join) -> User1 + User2
+    USER ||--|{ FRIENDSHIP : "has_friend"
+    USER }|--|{ FRIENDSHIP : "has_friend"
+
+    %% LIKE: m:n (selbst), Liker und Likee
+    USER ||--|{ LIKE : "gives"
+    USER }|--|{ LIKE : "receives"
+
+    %% MESSAGE: 1:n (Sender) + 1:n (Empfänger)
+    USER ||--o{ MESSAGE : "sends"
+    USER ||--o{ MESSAGE : "receives"
+
+    %% USER_PHOTO: 1:n (ein User kann mehrere Fotos haben)
+    USER ||--|{ USER_PHOTO : "owns"
