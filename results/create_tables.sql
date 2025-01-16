@@ -22,16 +22,17 @@ CREATE TABLE users (
     user_id       SERIAL PRIMARY KEY,
     first_name    VARCHAR(100) NOT NULL,
     last_name     VARCHAR(100) NOT NULL,
-    gender        VARCHAR(20),           -- z.B. "m", "w", "nicht binär"
+    gender        VARCHAR(20),
     birth_date    DATE,
     email         VARCHAR(255) NOT NULL UNIQUE,
     phone         VARCHAR(50),
     created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    profile_image BYTEA,                 -- BLOB (z.B. Profilfoto)
+    profile_image BYTEA,
     address_id    INT REFERENCES addresses(address_id)
         ON UPDATE CASCADE
-        ON DELETE SET NULL
+        ON DELETE SET NULL,
+    interested_in VARCHAR(20)
 );
 
 CREATE TABLE hobbies (

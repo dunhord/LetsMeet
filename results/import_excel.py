@@ -112,7 +112,13 @@ def main():
             city = addr_parts[2]
         
         # 3) Telefon
-        phone = str(row["telefon"]) if pd.notnull(row["telefon"]) else None
+        row_telefon = str(row["telefon"]) if pd.notnull(row["telefon"]) else None
+
+        if row_telefon:
+            # Entfernt alles außer Ziffern und "+"
+            row_telefon = re.sub(r"[^0-9+]", "", row_telefon)
+
+        phone = row_telefon
         
         # 4) Geschlecht
         gender = str(row["geschlecht"]) if pd.notnull(row["geschlecht"]) else None
