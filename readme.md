@@ -125,3 +125,103 @@ Die folgenden Schritte sollen ausgeführt und im _git_-Repository versioniert un
 
 
 
+# Technische Hinweise für die Realisierung
+
+## Docker-Setup
+
+Die gesamte Infrastruktur ist so konfiguriert, dass sie mit Docker Compose gestartet werden kann. Das System enthält zwei zentrale Dienste: **PostgreSQL** als Ziel-Datenbank und **MongoDB** als Quelle für bestimmte Daten.
+
+### Compose-Datei: `compose.yml`
+
+#### PostgreSQL-Dienst
+- **Container-Name:** `lf8_lets_meet_postgres_container`
+- **Image:** `postgres:16.4`
+- **Volumes:** Persistente Speicherung der PostgreSQL-Daten unter `lf8_lets_meet_postgres_data:/var/lib/postgresql/data`
+- **Umgebungsvariablen:**
+    - `POSTGRES_DB`: Name der Datenbank (`lf8_lets_meet_db`)
+    - `POSTGRES_USER`: Benutzername für den Zugriff (`user`)
+    - `POSTGRES_PASSWORD`: Passwort für den Zugriff (`secret`)
+- **Ports:** Der Dienst ist auf dem lokalen Port `5432` verfügbar.
+
+#### MongoDB-Dienst
+- **Container-Name:** `lf8_lets_meet_mongodb_container`
+- **Image:** `berndheidemann/letsmeet-mongodb:latest`
+- **Volumes:** Persistente Speicherung der MongoDB-Daten unter `lf8_lets_meet_mongodb_data:/data/db`
+- **Umgebungsvariablen:**
+    - `MONGO_INITDB_DATABASE`: Name der initialen Datenbank (`LetsMeet`)
+- **Ports:** Der Dienst ist auf dem lokalen Port `27017` verfügbar.
+
+### Starten der Dienste
+Führen Sie den folgenden Befehl im Projektordner aus, um die Dienste zu starten:
+```bash
+docker compose up
+```
+
+- Nach dem Starten läuft die PostgreSQL-Datenbank auf `localhost:5432`.
+- Die MongoDB-Datenbank ist auf `localhost:27017` erreichbar.
+
+### Zugriff auf die Datenbanken
+#### PostgreSQL
+Sie können mit jedem SQL-Client (z. B. pgAdmin, DBeaver) oder direkt mit `psql` auf die Datenbank zugreifen:
+```bash
+psql -h localhost -U user -d lf8_lets_meet_db
+```
+**Passwort:** `secret`
+
+#### MongoDB
+Verwenden Sie `mongo`-Clients oder GUI-Tools wie MongoDB Compass. Standard-URI:
+```
+mongodb://localhost:27017/LetsMeet
+```
+
+---
+
+## Zugriff auf MongoDB in VS Code
+
+Um auf die MongoDB in VS Code zuzugreifen, benötigen Sie die MongoDB-Erweiterung:
+1. Installieren Sie die Erweiterung **"MongoDB for VS Code"** aus dem VS Code Marketplace.
+2. Öffnen Sie die "MongoDB"-Ansicht (Strg+Shift+P → `MongoDB: Open Overview`).
+3. Fügen Sie eine neue Verbindung hinzu. Verwenden Sie die folgende Verbindungs-URI:
+   ```
+   mongodb://localhost:27017
+   ```
+4. Nach der Verbindung können Sie in der Ansicht die `LetsMeet`-Datenbank durchsuchen, Abfragen durchführen und Dokumente ansehen.
+
+---
+
+## Zugriff auf PostgreSQL in VS Code
+
+1. Installieren Sie die Erweiterung **"SQLTools"** aus dem VS Code Marketplace.
+2. Gehen Sie in die SQLTools-Verwaltung und erstellen Sie eine neue Verbindung:
+    - **DB-Typ:** PostgreSQL
+    - **Host:** `localhost`
+    - **Port:** `5432`
+    - **Benutzername:** `user`
+    - **Passwort:** `secret`
+    - **Datenbankname:** `lf8_lets_meet_db`
+3. Nach der Einrichtung können Sie SQL-Abfragen direkt aus VS Code ausführen.
+
+---
+
+## Dokumentation und Versionierung
+
+- Alle SQL-Skripte, Import-Skripte und Modelle sollen im `git`-Repository versioniert werden.
+- Verwenden Sie für die Dokumentation Markdown-Dateien. Empfohlene Struktur:
+  ```
+  results/
+    konzeptuelles_modell.md
+    logisches_modell.md
+    datenschutz.md
+    scripts/
+      create_tables.sql
+      import_excel.py
+      import_mongodb.py
+      import_xml.py
+  ```
+
+---
+
+## Testen
+
+Nach der Migration der Daten sollten alle Zwischenergebnisse durch SQL-Abfragen überprüft werden. Testen Sie die Konsistenz und Integrität der Daten anhand des konzeptuellen und logischen Modells.
+
