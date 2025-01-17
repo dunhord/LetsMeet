@@ -12,7 +12,7 @@ DROP TABLE IF EXISTS users CASCADE;
 
 CREATE TABLE addresses (
     address_id  SERIAL PRIMARY KEY,
-    street      VARCHAR(255),
+    street      VARCHAR(100),
     house_no    VARCHAR(50),
     zip_code    VARCHAR(20),
     city        VARCHAR(100)
@@ -20,11 +20,11 @@ CREATE TABLE addresses (
 
 CREATE TABLE users (
     user_id       SERIAL PRIMARY KEY,
-    first_name    VARCHAR(100) NOT NULL,
-    last_name     VARCHAR(100) NOT NULL,
-    gender        VARCHAR(20),
+    first_name    VARCHAR(65) NOT NULL,
+    last_name     VARCHAR(65) NOT NULL,
+    gender        VARCHAR(10),
     birth_date    DATE,
-    email         VARCHAR(255) NOT NULL UNIQUE,
+    email         VARCHAR(100) NOT NULL UNIQUE,
     phone         VARCHAR(50),
     created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -32,7 +32,7 @@ CREATE TABLE users (
     address_id    INT REFERENCES addresses(address_id)
         ON UPDATE CASCADE
         ON DELETE SET NULL,
-    interested_in VARCHAR(20)
+    interested_in VARCHAR(10)
 );
 
 CREATE TABLE hobbies (

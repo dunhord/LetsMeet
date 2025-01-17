@@ -1,26 +1,3 @@
-"""
-import_letsmeet.py
-------------------
-Ein einzelnes Skript, das Daten aus:
- 1) Excel-Datei
- 2) MongoDB
- 3) XML-Datei
-in die "Let's Meet"-Datenbank importiert.
-
-Gleichzeitig werden Dubletten (z.B. dieselbe E-Mail in verschiedenen Quellen)
-verhindert, indem wir:
- - E-Mail in 'users' unique halten -> ON CONFLICT DO NOTHING
- - Adressen per get_or_create_address -> identische Adresse wird nur einmal angelegt
- - Hobbies per get_or_create_hobby -> name UNIQUE
- - Sonstige Tabellen wie user_hobbies, friendships, likes, messages -> PK/Unique
-
-Benötigte Pakete:
- - pandas + openpyxl (für Excel)
- - pymongo (für MongoDB)
- - psycopg2 (für PostgreSQL)
- - xml.etree.ElementTree (Standard in Python)
-"""
-
 import pandas as pd
 import psycopg2
 import re
@@ -28,18 +5,14 @@ from datetime import datetime
 import xml.etree.ElementTree as ET
 from pymongo import MongoClient
 
-# =========== KONFIGURATION ANPASSEN ===========
-
-## Pfade
+## Scope: Import von Excel, MongoDB und XML in PostgreSQL
 EXCEL_FILE = "Lets Meet DB Dump.xlsx"
 XML_FILE   = "Lets_Meet_Hobbies.xml"
 
-## MongoDB
 MONGO_URI = "mongodb://localhost:27017"
 MONGO_DB = "LetsMeet"
 MONGO_COLLECTION = "users"
 
-## PostgreSQL
 POSTGRES_HOST = "localhost"
 POSTGRES_DB   = "lf8_lets_meet_db"
 POSTGRES_USER = "user"
@@ -82,10 +55,6 @@ def main():
     print("Alle Importe (Excel, MongoDB, XML) erfolgreich abgeschlossen.")
 
 
-# ----------------------------------------------------------------------------
-# 1) EXCEL-IMPORT
-# ----------------------------------------------------------------------------
-
 def import_from_excel(cursor, conn):
     """
     Liest eine Excel-Datei mit 8 Spalten:
@@ -119,37 +88,38 @@ def import_from_excel(cursor, conn):
     ]
 
     for _, row in df.iterrows():
-        # 1) Name
+        #Name
         name_str = str(row["nachname_vorname"]) if pd.notnull(row["nachname_vorname"]) else ""
         first_name, last_name = split_name_simple(name_str)
 
-        # 2) Adresse parsen
+        #Adresse
         addr_str = str(row["strasse_plz_ort"]) if pd.notnull(row["strasse_plz_ort"]) else ""
         street, house_no, zip_code, city = parse_address(addr_str)
 
         # -> get_or_create_address
         address_id = get_or_create_address(cursor, street, house_no, zip_code, city)
 
-        # 3) Telefon bereinigen
+        #elefon bereinigen
         row_telefon = str(row["telefon"]) if pd.notnull(row["telefon"]) else None
         if row_telefon:
             row_telefon = re.sub(r"[^0-9+]", "", row_telefon)
 
-        # 4) Geschlecht + Geburtsdatum
+        #Geschlecht + Geburtsdatum
         gender = str(row["geschlecht"]) if pd.notnull(row["geschlecht"]) else None
         birth_date = parse_date_ddmmYYYY(str(row["geburtsdatum"]))
 
-        # 5) E-Mail
+        #E-Mail
         email = str(row["email"]) if pd.notnull(row["email"]) else None
 
+        #Interessiert an
         interested_in_value = str(row["interessiert_an"]) if pd.notnull(row["interessiert_an"]) else None
 
-        # 6) Hobbys
+        #Hobbys
         hobbies_str = str(row["hobbies_raw"]) if pd.notnull(row["hobbies_raw"]) else ""
         hobby_entries = [h.strip() for h in hobbies_str.split(";") if h.strip()]
         
 
-        # 7) user anlegen
+        #User anlegen
         user_id = get_or_create_user(
             cursor=cursor,
             first_name=first_name,
@@ -165,7 +135,7 @@ def import_from_excel(cursor, conn):
             # z.B. E-Mail leer oder bereits existierend -> next
             continue
 
-        # 8) user_hobbies
+        #user_hobbies
         for hpart in hobby_entries:
             match = re.search(r"(.*?)%(\d+)%", hpart)
             if match:
@@ -180,7 +150,7 @@ def import_from_excel(cursor, conn):
                 """
                 cursor.execute(insert_user_hobbies, (user_id, hobby_id, priority_val))
             else:
-                # Falls kein %NN% => priority=0
+                #Falls kein %NN% => priority=0
                 hobby_name = hpart
                 if hobby_name:
                     hobby_id = get_or_create_hobby(cursor, hobby_name)
@@ -194,24 +164,8 @@ def import_from_excel(cursor, conn):
     conn.commit()
     print("Excel-Import abgeschlossen.")
 
-
-# ----------------------------------------------------------------------------
-# 2) MONGO-IMPORT
-# ----------------------------------------------------------------------------
-
 def import_from_mongo(cursor, conn):
-    """
-    Liest aus MongoDB (users-Collection) die Felder:
-     - _id (email), name, phone, friends, likes, messages
-    und schreibt in:
-     - users (ggf. ON CONFLICT DO NOTHING)
-     - friendships
-     - likes
-     - messages
 
-    Telefon wird bereinigt, Vorname/Nachname über split_name(...).
-    Doppelte E-Mails -> nur 1x angelegt.
-    """
     print("Starte MongoDB-Import...")
 
     mongo_client = MongoClient(MONGO_URI)
@@ -306,28 +260,8 @@ def import_from_mongo(cursor, conn):
     print("MongoDB-Import abgeschlossen.")
 
 
-# ----------------------------------------------------------------------------
-# 3) XML-IMPORT
-# ----------------------------------------------------------------------------
-
 def import_from_xml(cursor, conn):
-    """
-    Liest eine XML-Datei mit Struktur:
-    <users>
-      <user>
-        <email>...</email>
-        <name>Nachname, Vorname</name>
-        <hobbies>
-          <hobby>Schreiben</hobby>
-          ...
-        </hobbies>
-      </user>
-      ...
-    </users>
 
-    und legt in 'users', 'hobbies', 'user_hobbies' Einträge an.
-    Keine Dubletten dank ON CONFLICT.
-    """
     print("Starte XML-Import...")
 
     tree = ET.parse(XML_FILE)
@@ -376,15 +310,8 @@ def import_from_xml(cursor, conn):
     print("XML-Import abgeschlossen.")
 
 
-# ----------------------------------------------------------------------------
-# HILFSFUNKTIONEN
-# ----------------------------------------------------------------------------
-
 def split_name_simple(name_str):
-    """
-    Für Excel: "Nachname, Vorname" -> (Vorname, Nachname)
-    Falls kein Komma, parken alles in last_name.
-    """
+
     if not name_str:
         return ("-", "-")
     parts = name_str.split(",", 1)
@@ -396,10 +323,7 @@ def split_name_simple(name_str):
         return ("-", name_str.strip())
 
 def parse_address(addr_str):
-    """
-    Für Excel-Spalte "Minslebener Str. 0, 46286, Dorsten"
-    -> (street="Minslebener Str.", house_no="0", zip_code="46286", city="Dorsten")
-    """
+
     street = None
     house_no = None
     zip_code = None
@@ -476,10 +400,9 @@ def get_or_create_user(
     address_id,
     interested_in=None  # default None
 ):
-    """
-    Für Excel-Import: Legt User an (oder findet existierenden).
-    Achtung: 'interested_in' ist neu.
-    """
+    
+    #Für Excel-Import: Legt User an (oder findet existierenden).
+    
     if not email:
         return None
 
@@ -618,8 +541,5 @@ def parse_datetime_str(ts_str, fmt):
         return None
 
 
-# ----------------------------------------------------------------------------
-# START
-# ----------------------------------------------------------------------------
 if __name__ == "__main__":
     main()
