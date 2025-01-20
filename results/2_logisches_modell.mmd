@@ -1,0 +1,127 @@
+erDiagram
+
+
+    USERS {
+        int user_id PK
+        string first_name
+        string last_name
+        string gender
+        date birth_date
+        string email
+        string phone
+        datetime created_at
+        datetime updated_at
+        int address_id FK
+        int profile_photo_id FK
+        string interested_in
+        inet registration_ip
+        inet last_login_ip
+        datetime last_login_at
+    }
+
+    ADDRESSES {
+        int address_id PK
+        string street
+        string house_no
+        string zip_code
+        string city
+    }
+
+    HOBBIES {
+        int hobby_id PK
+        string name
+    }
+
+    USER_HOBBIES {
+        int user_id PK
+        int hobby_id PK
+        int priority
+    }
+
+    USER_HOBBY_PREFERENCES {
+        int user_id PK
+        int hobby_id PK
+        int preference
+    }
+
+    FRIENDSHIPS {
+        int user_id1 PK
+        int user_id2 PK
+        string status
+    }
+
+    LIKES {
+        int liker_id PK
+        int likee_id PK
+        string status
+        datetime like_time
+        inet liker_ip
+    }
+
+    MESSAGES {
+        int message_id PK
+        int conversation_id
+        int sender_id
+        int receiver_id
+        string message_text
+        datetime send_time
+        inet sender_ip
+    }
+
+    USER_PHOTOS {
+        int photo_id PK
+        int user_id
+        bytea photo_data
+        string photo_url
+        string description
+        boolean is_profile
+    }
+
+    USER_ACTIVITY_LOGS {
+        int log_id PK
+        int user_id FK
+        string activity_type
+        datetime activity_time
+        inet ip_address
+        text details
+    }
+
+    LOGIN_ATTEMPTS {
+        int attempt_id PK
+        int user_id FK
+        datetime attempt_time
+        inet ip_address
+        boolean success
+    }
+
+
+    %% Beispiel: USER hat genau 1 Adresse, ADDRESS kann von vielen USERn geteilt werden
+    USERS }|--|| ADDRESSES : "wohnt_in"
+
+    %% USER_HOBBY: m:n zwischen USER und HOBBY
+    USERS ||--|{ USER_HOBBIES : "hat"
+    HOBBIES ||--|{ USER_HOBBIES : "gehört_zu"
+
+    %% USER_HOBBY_PREFERENCE: Präferenzen der Hobbys anderer
+    USERS ||--|{ USER_HOBBY_PREFERENCES : "bevorzugt"
+    HOBBIES ||--|{ USER_HOBBY_PREFERENCES : "wird_bevorzugt"
+
+    %% FRIENDSHIP: m:n (self-join) -> User1 + User2
+    USERS ||--|{ FRIENDSHIPS : "ist_freund_mit"
+    USERS }|--|{ FRIENDSHIPS : "ist_freund_mit"
+
+    %% LIKE: m:n (selbst), Liker und Likee
+    USERS ||--|{ LIKES : "gibt_like"
+    USERS }|--|{ LIKES : "erhält_like"
+
+    %% MESSAGE: 1:n (Sender) + 1:n (Empfänger)
+    USERS ||--o{ MESSAGES : "sendet_nachricht"
+    USERS ||--o{ MESSAGES : "erhält_nachricht"
+
+    %% USER_PHOTO: 1:n (ein User kann mehrere Fotos haben)
+    USERS ||--|{ USER_PHOTOS : "besitzt"
+    USER_PHOTOS ||--|| USERS : "profilbild"
+
+    %% USER_PHOTO: 1:n (ein User kann mehrere Fotos haben)
+    USERS ||--|{ USER_ACTIVITY_LOGS : "hat_aktivität"
+    USERS ||--|{ LOGIN_ATTEMPTS : "hat_Login_Versuch"

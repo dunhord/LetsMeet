@@ -1,0 +1,37 @@
+erDiagram
+    USER {
+    }
+
+    ADDRESS {
+    }
+
+    HOBBY {
+    }
+
+    FRIENDSHIP {
+    }
+
+    LIKE {
+    }
+
+    MESSAGE {
+    }
+
+    
+
+    %% Beziehungen
+    USER ||--|| ADDRESS : "wohnt_in"
+    
+    USER ||--|{ HOBBY : "hat"
+    USER ||--|{ HOBBY : "bevorzugt"
+    
+    USER ||--|| FRIENDSHIP : "ist_freund_mit"
+    
+    USER ||--|| LIKE : "gibt_like"
+    USER ||--|| LIKE : "erhält_like"
+    
+    
+    USER ||--|| MESSAGE : "sendet_nachricht"
+    USER ||--|| MESSAGE : "erhält_nachricht"
+    
+

@@ -1,12 +1,17 @@
-DROP TABLE IF EXISTS addresses CASCADE;
-DROP TABLE IF EXISTS user_photos CASCADE;
-DROP TABLE IF EXISTS messages CASCADE;
-DROP TABLE IF EXISTS likes CASCADE;
-DROP TABLE IF EXISTS friendships CASCADE;
-DROP TABLE IF EXISTS user_hobby_preferences CASCADE;
-DROP TABLE IF EXISTS user_hobbies CASCADE;
-DROP TABLE IF EXISTS hobbies CASCADE;
-DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS
+    user_activity_logs,
+    login_attempts,
+    messages,
+    likes,
+    friendships,
+    user_hobby_preferences,
+    user_hobbies,
+    user_photos,
+    hobbies,
+    users,
+    addresses
+CASCADE;
+
 
 
 
@@ -19,21 +24,25 @@ CREATE TABLE addresses (
 );
 
 CREATE TABLE users (
-    user_id       SERIAL PRIMARY KEY,
-    first_name    VARCHAR(65) NOT NULL,
-    last_name     VARCHAR(65) NOT NULL,
-    gender        VARCHAR(10),
-    birth_date    DATE,
-    email         VARCHAR(100) NOT NULL UNIQUE,
-    phone         VARCHAR(50),
-    created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    profile_image BYTEA,
-    address_id    INT REFERENCES addresses(address_id)
+    user_id          SERIAL PRIMARY KEY,
+    first_name       VARCHAR(65) NOT NULL,
+    last_name        VARCHAR(65) NOT NULL,
+    gender           VARCHAR(10),
+    birth_date       DATE,
+    email            VARCHAR(100) NOT NULL UNIQUE,
+    phone            VARCHAR(50),
+    created_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    profile_photo_id INT,
+    address_id       INT REFERENCES addresses(address_id)
         ON UPDATE CASCADE
         ON DELETE SET NULL,
-    interested_in VARCHAR(10)
+    interested_in    VARCHAR(10),
+    registration_ip  INET, 
+    last_login_ip    INET, 
+    last_login_at    TIMESTAMP
 );
+
 
 CREATE TABLE hobbies (
     hobby_id  SERIAL PRIMARY KEY,
@@ -43,7 +52,7 @@ CREATE TABLE hobbies (
 CREATE TABLE user_hobbies (
     user_id   INT NOT NULL,
     hobby_id  INT NOT NULL,
-    priority  INT,           -- z.B. 0-100
+    priority  INT,
     PRIMARY KEY (user_id, hobby_id),
     FOREIGN KEY (user_id) REFERENCES users(user_id)
         ON UPDATE CASCADE
@@ -56,7 +65,7 @@ CREATE TABLE user_hobbies (
 CREATE TABLE user_hobby_preferences (
     user_id    INT NOT NULL,
     hobby_id   INT NOT NULL,
-    preference INT,    -- z.B. -100 bis +100
+    preference INT,
     PRIMARY KEY (user_id, hobby_id),
     FOREIGN KEY (user_id) REFERENCES users(user_id)
         ON UPDATE CASCADE
@@ -69,7 +78,7 @@ CREATE TABLE user_hobby_preferences (
 CREATE TABLE friendships (
     user_id1 INT NOT NULL,
     user_id2 INT NOT NULL,
-    status   VARCHAR(50),     -- z.B. 'confirmed', 'requested'...
+    status   VARCHAR(50),    
     PRIMARY KEY (user_id1, user_id2),
     FOREIGN KEY (user_id1) REFERENCES users(user_id)
         ON UPDATE CASCADE
@@ -80,10 +89,11 @@ CREATE TABLE friendships (
 );
 
 CREATE TABLE likes (
-    liker_id  INT NOT NULL,
-    likee_id  INT NOT NULL,
-    status    VARCHAR(50),    -- 'pending', 'mutual'...
-    like_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    liker_id   INT NOT NULL,
+    likee_id   INT NOT NULL,
+    status     VARCHAR(50),
+    like_time  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    liker_ip   INET,
     PRIMARY KEY (liker_id, likee_id),
     FOREIGN KEY (liker_id) REFERENCES users(user_id)
         ON UPDATE CASCADE
@@ -95,11 +105,12 @@ CREATE TABLE likes (
 
 CREATE TABLE messages (
     message_id       SERIAL PRIMARY KEY,
-    conversation_id  INT,               -- optional
+    conversation_id  INT,             
     sender_id        INT NOT NULL,
     receiver_id      INT NOT NULL,
     message_text     TEXT NOT NULL,
     send_time        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    sender_ip        INET, -- Neue Spalte für Sender-IP
     FOREIGN KEY (sender_id) REFERENCES users(user_id)
         ON UPDATE CASCADE
         ON DELETE CASCADE,
@@ -109,11 +120,35 @@ CREATE TABLE messages (
 );
 
 CREATE TABLE user_photos (
-    photo_id    SERIAL PRIMARY KEY,
-    user_id     INT NOT NULL,
-    photo_data  BYTEA,        -- BLOB für binäre Daten (optional)
-    photo_url   VARCHAR(255), -- externer Link, falls nicht in DB gespeichert
-    description VARCHAR(255),
+    photo_id     SERIAL PRIMARY KEY,
+    user_id      INT NOT NULL,
+    photo_data   BYTEA,       
+    photo_url    VARCHAR(255), 
+    description  VARCHAR(255),
+    is_profile   BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+);
+
+CREATE TABLE user_activity_logs (
+    log_id        SERIAL PRIMARY KEY,
+    user_id       INT NOT NULL,
+    activity_type VARCHAR(50) NOT NULL,
+    activity_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ip_address    INET, 
+    details       TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+);
+
+CREATE TABLE login_attempts (
+    attempt_id    SERIAL PRIMARY KEY,
+    user_id       INT,
+    attempt_time  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ip_address    INET,
+    success       BOOLEAN NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(user_id)
         ON UPDATE CASCADE
         ON DELETE CASCADE

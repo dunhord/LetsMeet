@@ -5,7 +5,7 @@ from datetime import datetime
 import xml.etree.ElementTree as ET
 from pymongo import MongoClient
 
-## Scope: Import von Excel, MongoDB und XML in PostgreSQL
+## Verbindung von Import von Excel, MongoDB und XML in PostgreSQL
 EXCEL_FILE = "Lets Meet DB Dump.xlsx"
 XML_FILE   = "Lets_Meet_Hobbies.xml"
 
@@ -57,7 +57,7 @@ def main():
 
 def import_from_excel(cursor, conn):
     """
-    Liest eine Excel-Datei mit 8 Spalten:
+    Liest die Excel-Datei:
      1) Nachname, Vorname
      2) Straße Nr, PLZ Ort
      3) Telefon
@@ -164,6 +164,7 @@ def import_from_excel(cursor, conn):
     conn.commit()
     print("Excel-Import abgeschlossen.")
 
+#MongoDB Import Funktion
 def import_from_mongo(cursor, conn):
 
     print("Starte MongoDB-Import...")
@@ -260,6 +261,7 @@ def import_from_mongo(cursor, conn):
     print("MongoDB-Import abgeschlossen.")
 
 
+#XML Import Funktion
 def import_from_xml(cursor, conn):
 
     print("Starte XML-Import...")
@@ -309,7 +311,7 @@ def import_from_xml(cursor, conn):
     conn.commit()
     print("XML-Import abgeschlossen.")
 
-
+# Hilfsfunktionen für Import wie Trennung von Namen, Adressen, Hobbies, etc.
 def split_name_simple(name_str):
 
     if not name_str:
@@ -369,7 +371,7 @@ def get_or_create_address(cursor, street, house_no, zip_code, city):
         # Falls leer
         return None
 
-    # CHECK
+    # Checkt ob Adresse existiert
     cursor.execute("""
         SELECT address_id
         FROM addresses
@@ -406,7 +408,7 @@ def get_or_create_user(
     if not email:
         return None
 
-    # Check user
+    # Checkt user
     cursor.execute("SELECT user_id FROM users WHERE email = %s", (email,))
     row = cursor.fetchone()
     if row:
@@ -469,7 +471,7 @@ def get_or_create_user_mongo(cursor, first_name, last_name, email, phone):
 
 def get_or_create_hobby(cursor, hobby_name):
     """
-    Legt Hobby an, falls nicht existiert. hobby_id -> zurück
+    Legt Hobby an, falls nicht existiert. hobby_id - zurück
     name UNIQUE => ON CONFLICT
     """
     if not hobby_name:
