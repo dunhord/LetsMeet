@@ -33,7 +33,6 @@ CREATE TABLE users (
     phone            VARCHAR(50),
     created_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    profile_photo_id INT,
     address_id       INT REFERENCES addresses(address_id)
         ON UPDATE CASCADE
         ON DELETE SET NULL,
@@ -110,7 +109,7 @@ CREATE TABLE messages (
     receiver_id      INT NOT NULL,
     message_text     TEXT NOT NULL,
     send_time        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    sender_ip        INET, -- Neue Spalte für Sender-IP
+    sender_ip        INET,
     FOREIGN KEY (sender_id) REFERENCES users(user_id)
         ON UPDATE CASCADE
         ON DELETE CASCADE,
